@@ -77,11 +77,11 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     };
 
     let total_volume_credits = || {
-        let mut volume_credits = 0;
+        let mut result = 0;
         for perf in &invoice.performances {
-            volume_credits += volume_credits_for(perf);
+            result += volume_credits_for(perf);
         }
-        volume_credits
+        result
     };
 
     result.push_str(format!("Amount owed is {}\n", total_amount / 100).as_ref());
