@@ -41,6 +41,7 @@ struct StatementData<'a> {
     customer: &'a String,
     performances: &'a Vec<StatementPerformance<'a>>,
     total_volume_credits: u8,
+    total_amount: u32,
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
@@ -90,6 +91,14 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         result
     }
 
+    fn total_amount(performances: &Vec<StatementPerformance>) -> u32 {
+        let mut result = 0;
+        for perf in performances {
+            result += perf.amount;
+        }
+        result
+    };
+
     let statement_performances = invoice.performances.iter().map(|performance| {
         StatementPerformance {
             playID: &performance.playID,
@@ -104,24 +113,17 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         customer: &invoice.customer,
         performances: &statement_performances,
         total_volume_credits: total_volume_credits(&statement_performances),
+        total_amount: total_amount(&statement_performances),
     };
     render_plain_text(&statement_data)
 }
 
 fn render_plain_text(data: &StatementData) -> String {
-    let total_amount = || {
-        let mut result = 0;
-        for perf in data.performances {
-            result += perf.amount;
-        }
-        result
-    };
-
     let mut result = format!("Statement for {}\n", data.customer);
     for perf in data.performances {
         result.push_str(format!("{}: {} ({} seats)\n", perf.play.name, perf.amount / 100, perf.audience).as_ref());
     }
-    result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
+    result.push_str(format!("Amount owed is {}\n", data.total_amount / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", data.total_volume_credits).as_ref());
 
     result
