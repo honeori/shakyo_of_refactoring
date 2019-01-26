@@ -27,27 +27,40 @@ pub struct Invoice {
     pub performances: Vec<Performance>,
 }
 
+//Performanceとメンバの共通部分があるがよい具合に共通化仕方がうかばない
+#[allow(non_snake_case)]
+struct StatementPerformance<'a> {
+    playID: &'a String,
+    audience: u8,
+    play: &'a Play,
+}
+
 struct StatementData<'a> {
     customer: &'a String,
-    performances: &'a Vec<Performance>,
+    performances: &'a Vec<StatementPerformance<'a>>,
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
-    let statement_data = StatementData{
-        customer: &invoice.customer,
-        performances: &invoice.performances,
-    };
-    render_plain_text(&statement_data, plays)
-}
-
-fn render_plain_text(data: &StatementData, plays: &HashMap<String, Play>) -> String {
     let play_for = |a_performance: &Performance| {
         plays.get(&a_performance.playID).unwrap()
     };
+    let statement_data = StatementData{
+        customer: &invoice.customer,
+        performances: &invoice.performances.iter().map(|performance| {
+            StatementPerformance {
+                playID: &performance.playID,
+                audience: performance.audience,
+                play: play_for(performance),
+            }
+        }).collect(),
+    };
+    render_plain_text(&statement_data)
+}
 
-    let amount_for = |a_performance: &Performance| {
+fn render_plain_text(data: &StatementData) -> String {
+    let amount_for = |a_performance: &StatementPerformance| {
         let mut result;
-        match play_for(a_performance).play_type.as_ref() {
+        match a_performance.play.play_type.as_ref() {
             "tragedy" => {
                 result = 40000;
                 if a_performance.audience > 30 {
@@ -61,16 +74,16 @@ fn render_plain_text(data: &StatementData, plays: &HashMap<String, Play>) -> Str
                 }
                 result += 300 * a_performance.audience as u32;
             },
-            _ => panic!("unknown play_type: {}", play_for(a_performance).play_type)
+            _ => panic!("unknown play_type: {}", a_performance.play.play_type)
         };
         result
     };
 
-    let volume_credits_for = |a_performance: &Performance| {
+    let volume_credits_for = |a_performance: &StatementPerformance| {
         let mut result = 0;
         result += max(a_performance.audience - 30, 0);
         // add extra credit for every ten comedy attendees
-        match play_for(a_performance).play_type.as_ref() {
+        match a_performance.play.play_type.as_ref() {
             "comedy" => {
                 result += (a_performance.audience as f64 / 5.0).floor() as u8;
             },
@@ -97,7 +110,7 @@ fn render_plain_text(data: &StatementData, plays: &HashMap<String, Play>) -> Str
 
     let mut result = format!("Statement for {}\n", data.customer);
     for perf in data.performances {
-        result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, amount_for(perf) / 100, perf.audience).as_ref());
+        result.push_str(format!("{}: {} ({} seats)\n", perf.play.name, amount_for(perf) / 100, perf.audience).as_ref());
     }
     result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", total_volume_credits()).as_ref());
