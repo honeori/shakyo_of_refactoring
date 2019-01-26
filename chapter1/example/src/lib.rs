@@ -40,6 +40,7 @@ struct StatementPerformance<'a> {
 struct StatementData<'a> {
     customer: &'a String,
     performances: &'a Vec<StatementPerformance<'a>>,
+    total_volume_credits: u8,
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
@@ -81,31 +82,33 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         result
     };
 
+    fn total_volume_credits(performances: &Vec<StatementPerformance>) -> u8 {
+        let mut result = 0;
+        for perf in performances {
+            result += perf.volume_credits;
+        }
+        result
+    }
+
+    let statement_performances = invoice.performances.iter().map(|performance| {
+        StatementPerformance {
+            playID: &performance.playID,
+            audience: performance.audience,
+            play: play_for(performance),
+            amount: amount_for(performance),
+            volume_credits: volume_credits_for(performance),
+        }
+    }).collect();
+
     let statement_data = StatementData{
         customer: &invoice.customer,
-        performances: &invoice.performances.iter().map(|performance| {
-            StatementPerformance {
-                playID: &performance.playID,
-                audience: performance.audience,
-                play: play_for(performance),
-                amount: amount_for(performance),
-                volume_credits: volume_credits_for(performance),
-            }
-        }).collect(),
+        performances: &statement_performances,
+        total_volume_credits: total_volume_credits(&statement_performances),
     };
     render_plain_text(&statement_data)
 }
 
 fn render_plain_text(data: &StatementData) -> String {
-
-    let total_volume_credits = || {
-        let mut result = 0;
-        for perf in data.performances {
-            result += perf.volume_credits;
-        }
-        result
-    };
-
     let total_amount = || {
         let mut result = 0;
         for perf in data.performances {
@@ -119,7 +122,7 @@ fn render_plain_text(data: &StatementData) -> String {
         result.push_str(format!("{}: {} ({} seats)\n", perf.play.name, perf.amount / 100, perf.audience).as_ref());
     }
     result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
-    result.push_str(format!("You earned {} credits\n", total_volume_credits()).as_ref());
+    result.push_str(format!("You earned {} credits\n", data.total_volume_credits).as_ref());
 
     result
 }
