@@ -70,12 +70,15 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     };
 
     for perf in &invoice.performances {
-        volume_credits += volume_credits_for(perf);
-
         result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, amount_for(perf) / 100, perf.audience).as_ref());
         // print line for this order
         total_amount += amount_for(perf);
     }
+
+    for perf in &invoice.performances {
+        volume_credits += volume_credits_for(perf);
+    }
+
 
     result.push_str(format!("Amount owed is {}\n", total_amount / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", volume_credits).as_ref());
