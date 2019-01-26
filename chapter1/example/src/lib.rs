@@ -28,6 +28,10 @@ pub struct Invoice {
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
+    render_plain_text(invoice, plays)
+}
+
+fn render_plain_text(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     let play_for = |a_performance: &Performance| {
         plays.get(&a_performance.playID).unwrap()
     };
