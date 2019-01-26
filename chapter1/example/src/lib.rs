@@ -33,6 +33,7 @@ struct StatementPerformance<'a> {
     playID: &'a String,
     audience: u8,
     play: &'a Play,
+    amount: u32,
 }
 
 struct StatementData<'a> {
@@ -44,23 +45,10 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     let play_for = |a_performance: &Performance| {
         plays.get(&a_performance.playID).unwrap()
     };
-    let statement_data = StatementData{
-        customer: &invoice.customer,
-        performances: &invoice.performances.iter().map(|performance| {
-            StatementPerformance {
-                playID: &performance.playID,
-                audience: performance.audience,
-                play: play_for(performance),
-            }
-        }).collect(),
-    };
-    render_plain_text(&statement_data)
-}
 
-fn render_plain_text(data: &StatementData) -> String {
-    let amount_for = |a_performance: &StatementPerformance| {
+    let amount_for = |a_performance: &Performance| {
         let mut result;
-        match a_performance.play.play_type.as_ref() {
+        match play_for(a_performance).play_type.as_ref() {
             "tragedy" => {
                 result = 40000;
                 if a_performance.audience > 30 {
@@ -74,11 +62,26 @@ fn render_plain_text(data: &StatementData) -> String {
                 }
                 result += 300 * a_performance.audience as u32;
             },
-            _ => panic!("unknown play_type: {}", a_performance.play.play_type)
+            _ => panic!("unknown play_type: {}", play_for(a_performance).play_type)
         };
         result
     };
 
+    let statement_data = StatementData{
+        customer: &invoice.customer,
+        performances: &invoice.performances.iter().map(|performance| {
+            StatementPerformance {
+                playID: &performance.playID,
+                audience: performance.audience,
+                play: play_for(performance),
+                amount: amount_for(performance),
+            }
+        }).collect(),
+    };
+    render_plain_text(&statement_data)
+}
+
+fn render_plain_text(data: &StatementData) -> String {
     let volume_credits_for = |a_performance: &StatementPerformance| {
         let mut result = 0;
         result += max(a_performance.audience - 30, 0);
@@ -103,14 +106,14 @@ fn render_plain_text(data: &StatementData) -> String {
     let total_amount = || {
         let mut result = 0;
         for perf in data.performances {
-            result += amount_for(perf);
+            result += perf.amount;
         }
         result
     };
 
     let mut result = format!("Statement for {}\n", data.customer);
     for perf in data.performances {
-        result.push_str(format!("{}: {} ({} seats)\n", perf.play.name, amount_for(perf) / 100, perf.audience).as_ref());
+        result.push_str(format!("{}: {} ({} seats)\n", perf.play.name, perf.amount / 100, perf.audience).as_ref());
     }
     result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", total_volume_credits()).as_ref());
