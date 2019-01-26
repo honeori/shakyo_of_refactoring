@@ -34,6 +34,7 @@ struct StatementPerformance<'a> {
     audience: u8,
     play: &'a Play,
     amount: u32,
+    volume_credits: u8,
 }
 
 struct StatementData<'a> {
@@ -67,26 +68,11 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         result
     };
 
-    let statement_data = StatementData{
-        customer: &invoice.customer,
-        performances: &invoice.performances.iter().map(|performance| {
-            StatementPerformance {
-                playID: &performance.playID,
-                audience: performance.audience,
-                play: play_for(performance),
-                amount: amount_for(performance),
-            }
-        }).collect(),
-    };
-    render_plain_text(&statement_data)
-}
-
-fn render_plain_text(data: &StatementData) -> String {
-    let volume_credits_for = |a_performance: &StatementPerformance| {
+    let volume_credits_for = |a_performance: &Performance| {
         let mut result = 0;
         result += max(a_performance.audience - 30, 0);
         // add extra credit for every ten comedy attendees
-        match a_performance.play.play_type.as_ref() {
+        match play_for(a_performance).play_type.as_ref() {
             "comedy" => {
                 result += (a_performance.audience as f64 / 5.0).floor() as u8;
             },
@@ -95,10 +81,27 @@ fn render_plain_text(data: &StatementData) -> String {
         result
     };
 
+    let statement_data = StatementData{
+        customer: &invoice.customer,
+        performances: &invoice.performances.iter().map(|performance| {
+            StatementPerformance {
+                playID: &performance.playID,
+                audience: performance.audience,
+                play: play_for(performance),
+                amount: amount_for(performance),
+                volume_credits: volume_credits_for(performance),
+            }
+        }).collect(),
+    };
+    render_plain_text(&statement_data)
+}
+
+fn render_plain_text(data: &StatementData) -> String {
+
     let total_volume_credits = || {
         let mut result = 0;
         for perf in data.performances {
-            result += volume_credits_for(perf);
+            result += perf.volume_credits;
         }
         result
     };
