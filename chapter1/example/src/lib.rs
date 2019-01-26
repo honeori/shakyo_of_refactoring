@@ -35,9 +35,9 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         plays.get(&a_performance.playID).unwrap()
     };
 
-    let amount_for = |a_performance: &Performance, play: &Play| {
+    let amount_for = |a_performance: &Performance| {
         let mut result;
-        match play.play_type.as_ref() {
+        match play_for(a_performance).play_type.as_ref() {
             "tragedy" => {
                 result = 40000;
                 if a_performance.audience > 30 {
@@ -53,18 +53,17 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
                 }
                 result += 300 * temp;
             },
-            _ => panic!("unknown play_type: {}", play.play_type)
+            _ => panic!("unknown play_type: {}", play_for(a_performance).play_type)
         };
         result
     };
 
     for perf in &invoice.performances {
-        let play = play_for(perf);
-        let mut this_amount = amount_for(perf, play);
+        let mut this_amount = amount_for(perf);
         // add volume credits
         volume_credits += max(perf.audience - 30, 0);
         // add extra credit for every ten comedy attendees
-        match play.play_type.as_ref() {
+        match play_for(perf).play_type.as_ref() {
             "comedy" => {
                 let temp = perf.audience as f64;
                 volume_credits += (temp / 5.0).floor() as u8;
@@ -72,7 +71,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
             _ => (),
         }
 
-        result.push_str(format!("{}: {} ({} seats)\n", play.name, this_amount / 100, perf.audience).as_ref());
+        result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, this_amount / 100, perf.audience).as_ref());
         // print line for this order
 
     }
