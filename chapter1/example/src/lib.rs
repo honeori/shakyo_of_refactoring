@@ -28,7 +28,7 @@ pub struct Invoice {
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
-    let total_amount = 0;
+    let mut total_amount = 0;
     let mut volume_credits = 0;
     let mut result = format!("Statement for {}\n", invoice.customer);
     let play_for = |a_performance: &Performance| {
@@ -73,7 +73,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
 
         result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, this_amount / 100, perf.audience).as_ref());
         // print line for this order
-
+        total_amount += this_amount;
     }
 
     result.push_str(format!("Amount owed is {}\n", total_amount / 100).as_ref());
@@ -136,7 +136,7 @@ mod test {
 Hamlet: 650 (55 seats)
 As You Like It: 580 (35 seats)
 Othello: 500 (40 seats)
-Amount owed is 0
+Amount owed is 1730
 You earned 47 credits
 "#
         );
