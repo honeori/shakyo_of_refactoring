@@ -2,10 +2,7 @@
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
-
 extern crate serde;
-
-use serde::{Deserialize, Serialize};
 
 use std::collections::HashMap;
 use std::cmp::max;
@@ -18,6 +15,7 @@ pub struct Play {
 }
 
 #[derive(Serialize, Deserialize)]
+#[allow(non_snake_case)]
 pub struct Performance {
     pub playID: String,
     pub audience: u8
@@ -30,13 +28,13 @@ pub struct Invoice {
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
-    let mut total_amount = 0;
+    let total_amount = 0;
     let mut volume_credits = 0;
     let mut result = format!("Statement for {}\n", invoice.customer);
 
     for perf in &invoice.performances {
         let play = plays.get(&perf.playID).unwrap();
-        let mut this_amount = 0;
+        let mut this_amount;
         match play.play_type.as_ref() {
             "tragedy" => {
                 this_amount = 40000;
@@ -78,6 +76,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
 }
 
 
+#[allow(dead_code)] // use for test just test only
 fn plays() -> HashMap<String, Play> {
     let data = r#"
 {
@@ -91,6 +90,8 @@ fn plays() -> HashMap<String, Play> {
     v
 }
 
+
+#[allow(dead_code)] // use for test just test only
 fn invoice() -> Invoice {
     let data = r#"
     {
