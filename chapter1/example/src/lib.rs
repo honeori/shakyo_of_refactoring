@@ -32,8 +32,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     let mut volume_credits = 0;
     let mut result = format!("Statement for {}\n", invoice.customer);
 
-    for perf in &invoice.performances {
-        let play = plays.get(&perf.playID).unwrap();
+    let amount_for = |perf: &Performance, play: &Play| {
         let mut this_amount;
         match play.play_type.as_ref() {
             "tragedy" => {
@@ -53,6 +52,12 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
             },
             _ => panic!("unknown play_type: {}", play.play_type)
         };
+        this_amount
+    };
+
+    for perf in &invoice.performances {
+        let play = plays.get(&perf.playID).unwrap();
+        let mut this_amount = amount_for(perf, play);
         // add volume credits
         volume_credits += max(perf.audience - 30, 0);
         // add extra credit for every ten comedy attendees
