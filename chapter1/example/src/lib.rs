@@ -33,26 +33,26 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     let mut result = format!("Statement for {}\n", invoice.customer);
 
     let amount_for = |perf: &Performance, play: &Play| {
-        let mut this_amount;
+        let mut result;
         match play.play_type.as_ref() {
             "tragedy" => {
-                this_amount = 40000;
+                result = 40000;
                 if perf.audience > 30 {
                     let temp = perf.audience as u32;
-                    this_amount += 1000 * (temp - 30);
+                    result += 1000 * (temp - 30);
                 }
             },
             "comedy" => {
-                this_amount = 30000;
+                result = 30000;
                 let temp = perf.audience as u32;
                 if perf.audience > 20 {
-                    this_amount += 10000 + 500 * (temp - 20);
+                    result += 10000 + 500 * (temp - 20);
                 }
-                this_amount += 300 * temp;
+                result += 300 * temp;
             },
             _ => panic!("unknown play_type: {}", play.play_type)
         };
-        this_amount
+        result
     };
 
     for perf in &invoice.performances {
