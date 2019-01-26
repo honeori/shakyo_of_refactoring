@@ -41,17 +41,15 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
             "tragedy" => {
                 result = 40000;
                 if a_performance.audience > 30 {
-                    let temp = a_performance.audience as u32;
-                    result += 1000 * (temp - 30);
+                    result += 1000 * (a_performance.audience as u32 - 30);
                 }
             },
             "comedy" => {
                 result = 30000;
-                let temp = a_performance.audience as u32;
                 if a_performance.audience > 20 {
-                    result += 10000 + 500 * (temp - 20);
+                    result += 10000 + 500 * (a_performance.audience as u32 - 20);
                 }
-                result += 300 * temp;
+                result += 300 * a_performance.audience as u32;
             },
             _ => panic!("unknown play_type: {}", play_for(a_performance).play_type)
         };
@@ -64,8 +62,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         // add extra credit for every ten comedy attendees
         match play_for(a_performance).play_type.as_ref() {
             "comedy" => {
-                let temp = a_performance.audience as f64;
-                result += (temp / 5.0).floor() as u8;
+                result += (a_performance.audience as f64 / 5.0).floor() as u8;
             },
             _ => (),
         }
