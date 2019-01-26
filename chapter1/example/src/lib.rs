@@ -58,8 +58,8 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         result
     };
 
-    for perf in &invoice.performances {
-        // add volume credits
+    let volume_credits_for = |perf: &Performance| {
+        let mut volume_credits = 0;
         volume_credits += max(perf.audience - 30, 0);
         // add extra credit for every ten comedy attendees
         match play_for(perf).play_type.as_ref() {
@@ -69,6 +69,11 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
             },
             _ => (),
         }
+        volume_credits
+    };
+
+    for perf in &invoice.performances {
+        volume_credits += volume_credits_for(perf);
 
         result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, amount_for(perf) / 100, perf.audience).as_ref());
         // print line for this order
