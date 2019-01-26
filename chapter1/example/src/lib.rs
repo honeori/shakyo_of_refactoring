@@ -15,6 +15,10 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
     render_plain_text(&create_statement_date(invoice, plays))
 }
 
+pub fn html_statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
+    render_html_text(&create_statement_date(invoice, plays))
+}
+
 fn render_plain_text(data: &StatementData) -> String {
     let mut result = format!("Statement for {}\n", data.customer);
     for perf in &data.performances {
@@ -22,6 +26,20 @@ fn render_plain_text(data: &StatementData) -> String {
     }
     result.push_str(format!("Amount owed is {}\n", data.total_amount / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", data.total_volume_credits).as_ref());
+
+    result
+}
+
+fn render_html_text(data: &StatementData) -> String {
+    let mut result = format!("<h1>Statement for {}</h1>\n", data.customer);
+    result.push_str(format!("<table>\n").as_ref());
+    result.push_str(format!("<tr><th>play</th><th>seats</th><th>cost</th></tr>\n").as_ref());
+    for perf in &data.performances {
+        result.push_str(format!("<tr><td>{}</td><td>{}</td><td>{} seats</td></tr>\n", perf.play.name, perf.audience, perf.amount / 100).as_ref());
+    }
+    result.push_str(format!("</table>\n").as_ref());
+    result.push_str(format!("<p>Amount owed is <em>{}</em></p>\n", data.total_amount / 100).as_ref());
+    result.push_str(format!("<p>You earned <em>{}</em> credits</p>\n", data.total_volume_credits).as_ref());
 
     result
 }
