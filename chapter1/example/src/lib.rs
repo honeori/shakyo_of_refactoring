@@ -28,7 +28,6 @@ pub struct Invoice {
 }
 
 pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
-    let mut total_amount = 0;
     let mut result = format!("Statement for {}\n", invoice.customer);
     let play_for = |a_performance: &Performance| {
         plays.get(&a_performance.playID).unwrap()
@@ -58,10 +57,7 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
 
     for perf in &invoice.performances {
         result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, amount_for(perf) / 100, perf.audience).as_ref());
-        // print line for this order
-        total_amount += amount_for(perf);
     }
-
 
     let volume_credits_for = |a_performance: &Performance| {
         let mut result = 0;
@@ -84,7 +80,15 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         result
     };
 
-    result.push_str(format!("Amount owed is {}\n", total_amount / 100).as_ref());
+    let total_amount = || {
+        let mut result = 0;
+        for perf in &invoice.performances {
+            result += amount_for(perf);
+        }
+        result
+    };
+
+    result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
     result.push_str(format!("You earned {} credits\n", total_volume_credits()).as_ref());
 
     result
