@@ -83,10 +83,9 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
         }
         volume_credits
     };
-    let volume_credits = total_volume_credits();
 
     result.push_str(format!("Amount owed is {}\n", total_amount / 100).as_ref());
-    result.push_str(format!("You earned {} credits\n", volume_credits).as_ref());
+    result.push_str(format!("You earned {} credits\n", total_volume_credits()).as_ref());
 
     result
 }
