@@ -27,11 +27,20 @@ pub struct Invoice {
     pub performances: Vec<Performance>,
 }
 
-pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
-    render_plain_text(invoice, plays)
+struct StatementData<'a> {
+    customer: &'a String,
+    performances: &'a Vec<Performance>,
 }
 
-fn render_plain_text(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
+pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
+    let statement_data = StatementData{
+        customer: &invoice.customer,
+        performances: &invoice.performances,
+    };
+    render_plain_text(&statement_data, plays)
+}
+
+fn render_plain_text(data: &StatementData, plays: &HashMap<String, Play>) -> String {
     let play_for = |a_performance: &Performance| {
         plays.get(&a_performance.playID).unwrap()
     };
@@ -72,7 +81,7 @@ fn render_plain_text(invoice: &Invoice, plays: &HashMap<String, Play>) -> String
 
     let total_volume_credits = || {
         let mut result = 0;
-        for perf in &invoice.performances {
+        for perf in data.performances {
             result += volume_credits_for(perf);
         }
         result
@@ -80,14 +89,14 @@ fn render_plain_text(invoice: &Invoice, plays: &HashMap<String, Play>) -> String
 
     let total_amount = || {
         let mut result = 0;
-        for perf in &invoice.performances {
+        for perf in data.performances {
             result += amount_for(perf);
         }
         result
     };
 
-    let mut result = format!("Statement for {}\n", invoice.customer);
-    for perf in &invoice.performances {
+    let mut result = format!("Statement for {}\n", data.customer);
+    for perf in data.performances {
         result.push_str(format!("{}: {} ({} seats)\n", play_for(perf).name, amount_for(perf) / 100, perf.audience).as_ref());
     }
     result.push_str(format!("Amount owed is {}\n", total_amount() / 100).as_ref());
