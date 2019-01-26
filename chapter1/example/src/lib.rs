@@ -28,9 +28,7 @@ pub struct Invoice {
 }
 
 //Performanceとメンバの共通部分があるがよい具合に共通化仕方がうかばない
-#[allow(non_snake_case)]
 struct StatementPerformance<'a> {
-    playID: &'a String,
     audience: u8,
     play: &'a Play,
     amount: u32,
@@ -101,7 +99,6 @@ pub fn statement(invoice: &Invoice, plays: &HashMap<String, Play>) -> String {
 
     let statement_performances = invoice.performances.iter().map(|performance| {
         StatementPerformance {
-            playID: &performance.playID,
             audience: performance.audience,
             play: play_for(performance),
             amount: amount_for(performance),
